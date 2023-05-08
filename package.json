@@ -1,0 +1,31 @@
+{
+  "name": "brain-parser",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webintoit/brain-parser.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/webintoit/brain-parser/issues"
+  },
+  "homepage": "https://github.com/webintoit/brain-parser#readme",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "bull": "4.9.0",
+    "express": "^4.18.2",
+    "form-data": "^4.0.0",
+    "ioredis": "5.2.3",
+    "log4js": "6.6.1",
+    "mongodb": "^5.4.0",
+    "nedb": "^1.8.0",
+    "yandex-market-language": "^0.4.1"
+  }
+}
