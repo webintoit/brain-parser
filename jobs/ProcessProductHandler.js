@@ -19,7 +19,7 @@ class ProcessProductHandler {
             const products = this._database.collection('products');
 
 
-            const productFromDb = await products.findOne({ productID: job.data.product.productID, product_code: job.data.product.product_code });
+            const productFromDb = await products.findOne({ productID: job.data.product.productID });
 
             const productInfo = await this._brainClient.getProductInfo(job.data.product.productID);
             const productInStock = Object.values(productInfo.available).reduce((acc, val) => acc + Number(val), 0);

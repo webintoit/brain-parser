@@ -4,6 +4,7 @@ const FormData = require('form-data');
 
 const BRAIN_URL = 'http://api.brain.com.ua/';
 const RELOGIN_AFTER_REQUESTS = 20;
+const MODIFIED_TIME_SENSITIVITY_DAYS = 3; // items modified in the last 3 days
 
 class BrainClient {
     constructor({ login, password, language='ua', logger, targetId = '57' }) {
@@ -60,13 +61,46 @@ class BrainClient {
     }
 
     async getPricelistUrl(){
-        const { data } = await this._axios.get(`${BRAIN_URL}/pricelists/${this._targetId}/json/${this._sessionToken}?lang=${this._language}&full=1`);
+        const { data } = await this._axios.get(
+            `${BRAIN_URL}/pricelists/${this._targetId}/json/${this._sessionToken}?lang=${this._language}&full=3`
+        );
         return data.url;
     }
 
     async getPrices(url){
         const { data } = await this._axios.get(url);
         return data;
+    }
+
+    async getUpdatedProductIds(){
+        const limit = 100;
+        let offset = 0;
+        let productsCount = Infinity;
+        const updatedProductIds = [];
+        const modifiedDate = new Date();
+
+        modifiedDate.setDate(modifiedDate.getDate() - MODIFIED_TIME_SENSITIVITY_DAYS);
+        modifiedDate.setHours(0, 0, 0, 0);
+
+        const modifiedDateString = encodeURIComponent(
+            modifiedDate.toISOString().replace('T', ' ').replace(/\.\d{3}Z/, '')
+        );
+
+        while(true) {
+            const { data } = await this._axios.get(
+                `${BRAIN_URL}/modified_products/${this._sessionToken}?modified_time=${modifiedDateString}&limit=${limit}&offset=${offset}`
+            );
+            productsCount = data.result.count;
+            updatedProductIds.push(...data.result.productIDs);
+
+            if(data.result.length < limit || productsCount < offset + limit) {
+                break;
+            }
+
+            offset += limit;
+        }
+        
+        return updatedProductIds;
     }
 
     get _axios() {
