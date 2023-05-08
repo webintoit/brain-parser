@@ -8,6 +8,7 @@ const BrainClient = require('./utils/BrainClient');
 const GetCategoryProductsHandler = require('./jobs/GetCategoryProductsHandler');
 const ProcessProductHandler = require('./jobs/ProcessProductHandler');
 const XMLGenerator = require('./utils/XMLGenerator');
+const GetProductsFromPricelistHandler = require("./jobs/GetProductsFromPricelistHandler");
 const uri = `mongodb://${config.mongo.user}:${config.mongo.password}@${config.mongo.host}:${config.mongo.port}`;
 
 async function main(){
@@ -27,6 +28,7 @@ async function main(){
     const logger = LoggerProvider.create('app');
     const processProductQueue =  queueManager.getQueue(ProcessProductHandler.queueName);
     const getCategoryProductsQueue =  queueManager.getQueue(GetCategoryProductsHandler.queueName);
+    const getProductsFromPricelistQueue =  queueManager.getQueue(GetProductsFromPricelistHandler.queueName);
     const syncQueue =  queueManager.getQueue('sync');
 
     await client.connect();
@@ -41,6 +43,11 @@ async function main(){
         brainClient,
         processProductQueue,
     });
+    const getProductsFromPricelistHandler = new GetProductsFromPricelistHandler({
+        logger: LoggerProvider.create('GetProductsFromPricelistHandler'),
+        brainClient,
+        processProductQueue,
+    });
 
     await brainClient.login();
 
@@ -49,6 +56,7 @@ async function main(){
 
     processProductQueue.process(1, job => processProductHandler.handle(job));
     getCategoryProductsQueue.process(1, job => getCategoryProductsHandler.handle(job));
+    getProductsFromPricelistQueue.process(1, job => getProductsFromPricelistHandler.handle(job));
 
     syncQueue.process(1, async () => {
         await brainClient.login();
@@ -57,16 +65,21 @@ async function main(){
         categories = await brainClient.getCategories();
         vendors = await brainClient.getVendors();
 
-        getCategoryProductsQueue.addBulk(
-            categories.map(category => {
-                return {
-                    data: {
-                        categoryName: category.name,
-                        categoryId: category.categoryID,
+        if(config.parseFromPricelist){
+            logger.info('Parsing from pricelist');
+            getProductsFromPricelistQueue.add({});
+        } else {
+            getCategoryProductsQueue.addBulk(
+                categories.map(category => {
+                    return {
+                        data: {
+                            categoryName: category.name,
+                            categoryId: category.categoryID,
+                        }
                     }
-                }
-            })
-        );
+                })
+            );
+        }
     });
 
     syncQueue.add(
@@ -77,6 +90,7 @@ async function main(){
             }
         }
     );
+    syncQueue.add({}); // initial run
 
     app.get('/brain.xml', async (req, res) => {
         const generator = new XMLGenerator({

@@ -41,7 +41,7 @@ class ProcessProductHandler {
                     { $set: { ...productInfo, images, productInStock } }
                 );
             } else {
-                await products.insertOne({ ...productInfo, images, productInStock });
+                await products.insertOne({ ...productInfo, images, productInStock, groupId: job.data.product.groupId });
             }
 
             this._logger.info('Product handled. Id: %s, Name: %s. Stock: %d', job.data.product.productID, job.data.product.name, productInStock);

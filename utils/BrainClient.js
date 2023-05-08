@@ -6,13 +6,14 @@ const BRAIN_URL = 'http://api.brain.com.ua/';
 const RELOGIN_AFTER_REQUESTS = 20;
 
 class BrainClient {
-    constructor({ login, password, language='ua', logger }) {
+    constructor({ login, password, language='ua', logger, targetId = '57' }) {
         this._login = login;
         this._password = password;
         this._sessionToken = null;
         this._language = language;
         this._requestsMade = 0;
         this._logger = logger;
+        this._targetId = targetId;
     }
 
 
@@ -56,6 +57,16 @@ class BrainClient {
     async getVendors(){
         const { data } = await this._axios.get(`${BRAIN_URL}/vendors/${this._sessionToken}?lang=${this._language}`);
         return data.result;
+    }
+
+    async getPricelistUrl(){
+        const { data } = await this._axios.get(`${BRAIN_URL}/pricelists/${this._targetId}/json/${this._sessionToken}?lang=${this._language}&full=1`);
+        return data.url;
+    }
+
+    async getPrices(url){
+        const { data } = await this._axios.get(url);
+        return data;
     }
 
     get _axios() {

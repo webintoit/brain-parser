@@ -13,4 +13,5 @@ module.exports = {
     },
     brainLogin: process.env.BRAIN_LOGIN || 'login',
     brainPassword: process.env.BRAIN_PASSWORD || 'password',
+    parseFromPricelist: process.env.PARSE_FROM_PRICELIST,
 };

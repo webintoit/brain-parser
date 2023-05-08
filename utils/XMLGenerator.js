@@ -81,6 +81,10 @@ class XMLGenerator {
                     });
                 }
 
+                if(product.groupId){
+                    offer.groupId = product.groupId;
+                }
+
                 return offer;
             }),
         };
